@@ -7,10 +7,12 @@ This module implements some simple utility functions.
 """
 
 import os.path
+import sys
 import pylatex.base_classes
 import shutil
+import uuid
 import tempfile
-
+import ctypes
 
 _latex_special_chars = {
     '&': r'\&',
@@ -28,9 +30,19 @@ _latex_special_chars = {
     '\xA0': '~',  # Non-breaking space
 }
 
+
+def _get_long_path_name():
+    str_converter = str if sys.version_info[0] == 3 else unicode
+    tmp = str_converter(os.path.expandvars("$TMP"))
+
+    GetLongPathName = ctypes.windll.kernel32.GetLongPathNameW
+    buffer = ctypes.create_unicode_buffer(GetLongPathName(tmp, 0, 0))
+    GetLongPathName(tmp, buffer, len(buffer))
+    return buffer.value
+
 _tmp_path = os.path.abspath(
     os.path.join(
-        tempfile.gettempdir(),
+        tempfile.gettempdir() if os.name == 'posix' else _get_long_path_name(),
         "pylatex"
     )
 )
@@ -314,7 +326,7 @@ def verbatim(s, *, delimiter='|'):
 def make_temp_dir():
     """Create a temporary directory if it doesn't exist.
 
-    Directories created by this functionn follow the format specified
+    Directories created by this function follow the format specified
     by ``_tmp_path`` and are a pylatex subdirectory within
     a standard ``tempfile`` tempdir.
 
@@ -333,6 +345,20 @@ def make_temp_dir():
     if not os.path.exists(_tmp_path):
         os.makedirs(_tmp_path)
     return _tmp_path
+
+
+def make_temp_file(extension='pdf'):
+    """Creates a random named file in a temporary directory.
+
+    Arguments
+    ---------
+    ext: str extention of the created file
+
+    Returns
+    -------
+    str the path of the created file
+    """
+    return os.path.join(make_temp_dir(), str(uuid.uuid4()) + '.' + extension)
 
 
 def rm_temp_dir():

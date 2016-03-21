@@ -8,10 +8,9 @@ This module implements the class that deals with graphics.
 
 import os.path
 
-from .utils import fix_filename, make_temp_dir, NoEscape, escape_latex
+from .utils import fix_filename, make_temp_file, NoEscape, escape_latex
 from .base_classes import UnsafeCommand, Float
 from .package import Package
-import uuid
 
 
 class Figure(Float):
@@ -46,7 +45,7 @@ class Figure(Float):
         self.append(UnsafeCommand('includegraphics', options=width,
                                   arguments=fix_filename(filename)))
 
-    def _save_plot(self, *args, **kwargs):
+    def _save_plot(self, fig=None, clean=False, *args, **kwargs):
         """Save the plot.
 
         Returns
@@ -57,11 +56,15 @@ class Figure(Float):
 
         import matplotlib.pyplot as plt
 
-        tmp_path = make_temp_dir()
+        filename = make_temp_file()
 
-        filename = os.path.join(tmp_path, str(uuid.uuid4()) + '.pdf')
+        if fig and isinstance(fig, plt.Figure):
+            fig.savefig(filename, *args, **kwargs)
+        else:
+            plt.savefig(filename, *args, **kwargs)
 
-        plt.savefig(filename, *args, **kwargs)
+        if clean:
+            plt.clf()
 
         return filename
 
