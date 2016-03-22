@@ -101,7 +101,7 @@ class Document(Environment):
 
         super().generate_tex(self._select_filepath(filepath))
 
-    def generate_pdf(self, filepath=None, *, clean=True, clean_tex=True,
+    def generate_pdf(self, filepath=None, *, clean=True, clean_tex=True, clean_temp_dir=True,
                      compiler=None, compiler_args=None, silent=True):
         """Generate a pdf file from the document.
 
@@ -200,7 +200,8 @@ class Document(Environment):
             if clean_tex:
                 os.remove(basename + '.tex')  # Remove generated tex file
 
-            rm_temp_dir()
+            if clean_temp_dir:
+                rm_temp_dir()
 
             # Compilation has finished, so no further compilers have to be
             # tried
